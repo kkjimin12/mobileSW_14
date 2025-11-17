@@ -18,14 +18,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-//            MobileQuizappTheme {
-//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//                    Greeting(
-//                        name = "Android",
-//                        modifier = Modifier.padding(innerPadding)
-//                    )
-//                }
-//            }
             QuizApp()
         }
     }
@@ -39,25 +31,25 @@ fun QuizApp(){
 
 @Composable
 fun HomeScreen(){
-
+ // 주제 선택, 틀린 문제 보기, 랭킹 보기
 }
 
 @Composable
 fun QuizScreen(){
-
+ // 문제 보여주고 답 선택
 }
 
 @Composable
 fun ResultScreen(){
-
+ // 점수 표시, 홈 버튼
 }
 
 @Composable
 fun WrongQuizScreen(){
-
+ // 틀린 문제 목록 표시
 }
 
 @Composable
 fun RankingScreen(){
-
+ // 랭킹 표시
 }
