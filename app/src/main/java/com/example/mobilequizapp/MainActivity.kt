@@ -81,7 +81,10 @@ fun QuizApp(){
             onBackToHome = { currentScreen = "home" },
             onWrongQuiz = { currentScreen = "wrong" }
         )
-        "wrong" -> WrongQuizScreen()
+        "wrong" -> WrongQuizScreen(
+            wrongQuizList = lastWrongList,
+            onBackToHome = {currentScreen = "home"}
+        )
         "ranking" -> RankingScreen()
     }
 }
@@ -111,9 +114,13 @@ fun HomeScreen(context: Context, onTopicSelected: (String, String) -> Unit){
 data class Quiz(
     val question: String,
     val options: List<String>,
-    val answer: Int
+    val answer: Int,
+    val selectedAnswer: Int? = null, // 내가 선택한 답 저장
+    val topic: String = "" // 오답 어떤 주제에 해당하는지
 )
+//틀린 문제 + 내가 선택한 답 같이 저장
 
+//정답, 오답 소리
 fun playSound(context: Context, isCorrect: Boolean){
     val soundRes = if(isCorrect) R.raw.correct else R.raw.wrong
     val mp = MediaPlayer.create(context,soundRes)
@@ -143,7 +150,7 @@ fun QuizScreen(
     //오답, 정답표시후 잠시 멈췄다 다음 문제로 넘어감
     LaunchedEffect (isAnswerRevealed){
         if(isAnswerRevealed){
-            delay(500) // 0.5초 후에 넘어감
+            delay(1000) // 0.5초 후에 넘어감
             if(currentNum < quizList.size - 1){
                 currentNum ++
             }else{
@@ -239,7 +246,7 @@ fun QuizScreen(
                                 playSound(context,true)
                             }
                             if(index != currentQuiz.answer) {
-                                wrongList.add(currentQuiz)
+                                wrongList.add(currentQuiz.copy(selectedAnswer = index))
                                 //오답이면 소리
                                 playSound(context,false)
                             } //오답 저장
@@ -261,7 +268,7 @@ fun QuizScreen(
         }
     }
 }
-//assets json 파일 읽어오는 함수
+//assets json 파일(문제목록) 읽어오는 함수
 fun loadQuizFromAssets(context: Context, fileName: String): List<Quiz>{
     val jsonString = context.assets.open(fileName)
         .bufferedReader()
@@ -400,8 +407,85 @@ fun ResultScreen(
 }
 
 @Composable
-fun WrongQuizScreen(){
+fun WrongQuizScreen(
+    wrongQuizList: List<Quiz> = listOf(),
+    onBackToHome: () -> Unit
+){
  // 틀린 문제 목록 표시
+    Column (
+        modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))
+    ){
+        Row (
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .height(75.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Text(
+                text = "틀린 문제 다시보기",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f).padding(top = 15.dp)
+            )
+            Button(
+                onClick = onBackToHome,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+            ) {
+                Text("⌂", fontSize = 24.sp, color = Color.Black,modifier = Modifier.padding(top = 9.dp))
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        //틀린 문제 목록
+        if(wrongQuizList.isEmpty()){
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ){
+                Text("틀린 문제가 없습니다!", fontSize = 18.sp)
+            }
+        }else{
+            androidx.compose.foundation.lazy.LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
+            ) {
+                items(wrongQuizList.size){ index->
+                    val quiz = wrongQuizList[index]
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White, RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                    ){
+                        Column {
+                            Text(
+                                text = "${index + 1}. ${quiz.question}",
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            quiz.options.forEachIndexed { i, option ->
+                                val color = when{
+                                    i == quiz.answer -> Color(0xD56CB46E)
+                                    i == quiz.selectedAnswer -> Color(0xDDE17D7D)
+                                    else -> Color.Black
+                                }
+                                Text(
+                                    text = "${i + 1}. $option",
+                                    color = color
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
