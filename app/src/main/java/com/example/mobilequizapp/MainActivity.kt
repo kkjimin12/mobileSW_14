@@ -168,7 +168,7 @@ fun QuizScreen(
         ){
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically
             ){
                 Button(
                     onClick = onBackToHome,
@@ -178,7 +178,7 @@ fun QuizScreen(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Home", color = Color.White)
+                    Text("⌂", fontSize = 24.sp, color = Color.White)
                 } //홈으로가기 버튼
                 Text(
                     text = topic,
@@ -204,7 +204,7 @@ fun QuizScreen(
         ){
             Text(
                 text = "${currentQuiz.question}",
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Center)
             )
@@ -335,15 +335,19 @@ fun ResultScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,modifier = Modifier.weight(1f)) {
                         Text("문제 풀이 수", fontWeight = FontWeight.SemiBold)
                         Spacer(modifier = Modifier.height(10.dp))
                         Text("$totalQuestions", fontSize = 20.sp,fontWeight = FontWeight.Bold)
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,modifier = Modifier.weight(1f)) {
+                        Text("정답 수", fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("$correctCount",  fontSize = 20.sp,fontWeight = FontWeight.Bold)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,modifier = Modifier.weight(1f)) {
                         Text("오답 수", fontWeight = FontWeight.SemiBold)
                         Spacer(modifier = Modifier.height(10.dp))
                         Text("$wrongCount",  fontSize = 20.sp,fontWeight = FontWeight.Bold)
