@@ -17,10 +17,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,45 +61,61 @@ fun QuizApp(){
     var currentTopic by remember {mutableStateOf("")}
     var currentQuizList by remember {mutableStateOf(listOf<Quiz>())}
     var lastScore by remember {mutableStateOf(0)}
-    var lastWrongList by remember {mutableStateOf(listOf<Quiz>())}
+    var lastWrongList by remember {mutableStateOf(listOf<Quiz>())} //전체 오답 저장변수(오답노트용)
+    var currentQuizWrongList by remember { mutableStateOf(listOf<Quiz>()) } // 지금 푼 퀴즈 오답만 (결과화면용)
     val context = LocalContext.current
 
     when(currentScreen){
-        "home" -> HomeScreen(context) { topicName, fileName ->
-            currentQuizList = loadQuizFromAssets(context, fileName)
-            currentTopic = topicName
-            currentScreen = "quiz"
-        }
+        "home" -> HomeScreen(
+            context = context,
+            onTopicSelected = { topicName, fileName ->
+                currentQuizList = loadQuizFromAssets(context,fileName)
+                currentTopic = topicName
+                currentScreen = "quiz"
+            },
+            onWrongQuizClick = {
+                currentScreen = "wrong"
+            }
+        )
         "quiz" -> QuizScreen(
             topic = currentTopic,
             quizList = currentQuizList,
             onBackToHome = {currentScreen = "home"},
             onQuizFinished = {score, wrongList ->
                 lastScore = score
-                lastWrongList = wrongList.toList()
+                currentQuizWrongList = wrongList.toList() // 지금 푼 퀴즈 오답 저장
+                // 기존 틀린 문제와 새롭게 틀린 문제 합치기 = 전체 오답
+                lastWrongList = (lastWrongList + wrongList).distinct()
                 currentScreen = "result"
             }
         )
         "result" -> ResultScreen(
             topic = currentTopic,
             totalQuestions = currentQuizList.size,
-            wrongCount = lastWrongList.size,
+            wrongCount = currentQuizWrongList.size,
             onBackToHome = { currentScreen = "home" },
             onWrongQuiz = { currentScreen = "wrong" }
         )
         "wrong" -> WrongQuizScreen(
-            wrongQuizList = lastWrongList,
-            onBackToHome = {currentScreen = "home"}
+            wrongQuizList = lastWrongList.reversed(), //최근 푼 문제를 젤 위로
+            onBackToHome = {currentScreen = "home"},
+            onDeleteQuiz = { quizToDelete ->
+                lastWrongList = lastWrongList - quizToDelete
+            }
         )
         "ranking" -> RankingScreen()
     }
 }
 
 @Composable
-fun HomeScreen(context: Context, onTopicSelected: (String, String) -> Unit){
+fun HomeScreen(
+    context: Context,
+    onTopicSelected: (String, String) -> Unit,
+    onWrongQuizClick: () -> Unit
+){
  // 주제 선택, 틀린 문제 보기, 랭킹 보기
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().padding(top = 50.dp),
     ){
         Button(onClick = {onTopicSelected("수도","capitals.json")}){
             Text("수도")
@@ -107,6 +129,9 @@ fun HomeScreen(context: Context, onTopicSelected: (String, String) -> Unit){
         Button(onClick = {onTopicSelected("넌센스","nonsense.json")}){
             Text("넌센스")
         }
+        Button(onClick = onWrongQuizClick){
+            Text("오답 노트 보기")
+        }
     }
 }
 
@@ -116,11 +141,10 @@ data class Quiz(
     val options: List<String>,
     val answer: Int,
     val selectedAnswer: Int? = null, // 내가 선택한 답 저장
-    val topic: String = "" // 오답 어떤 주제에 해당하는지
+    val topic: String = "" // 오답 주제
 )
-//틀린 문제 + 내가 선택한 답 같이 저장
 
-//정답, 오답 소리
+//정답, 오답 효과음
 fun playSound(context: Context, isCorrect: Boolean){
     val soundRes = if(isCorrect) R.raw.correct else R.raw.wrong
     val mp = MediaPlayer.create(context,soundRes)
@@ -130,8 +154,8 @@ fun playSound(context: Context, isCorrect: Boolean){
 
 @Composable
 fun QuizScreen(
-    topic: String,                              //홈에서 선택한 주제
-    quizList: List<Quiz>,                       //주제에 맞는 문제 리스트
+    topic: String,                              // 홈에서 선택한 주제
+    quizList: List<Quiz>,                       // 주제에 맞는 문제 리스트
     onBackToHome: () -> Unit,                   // 홈으로 돌아가기 버튼
     onQuizFinished: (Int, List<Quiz>) -> Unit   // 점수, 틀린 문제 저장
 ){
@@ -140,17 +164,14 @@ fun QuizScreen(
         mutableStateListOf<Int?>().apply { repeat(quizList.size) { add(null) } }
     }
     var isAnswerRevealed by remember { mutableStateOf(false) }
-    val wrongList = remember {mutableStateListOf<Quiz>()} //틀린 문제 저장
+    val wrongList = remember {mutableStateListOf<Quiz>()} //지금 푼 퀴즈 오답 저장
     val currentQuiz = quizList[currentNum]
-
-    //효과음
     val context = LocalContext.current
-//    val wrongSound = remember { MediaPlayer.create(context, R.raw.wrong) }
 
     //오답, 정답표시후 잠시 멈췄다 다음 문제로 넘어감
     LaunchedEffect (isAnswerRevealed){
         if(isAnswerRevealed){
-            delay(1000) // 0.5초 후에 넘어감
+            delay(1000) // 1초 후에 넘어감
             if(currentNum < quizList.size - 1){
                 currentNum ++
             }else{
@@ -171,32 +192,26 @@ fun QuizScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.Black, shape = RoundedCornerShape(8.dp))
-                .padding(12.dp)
+//                .padding(12.dp)
+                .height(65.dp)
         ){
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Button(
-                    onClick = onBackToHome,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("⌂", fontSize = 24.sp, color = Color.White)
-                } //홈으로가기 버튼
-                Text(
-                    text = topic,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.weight(2f),
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.weight(1f)) //홈 버튼과 균형
+            Button( //홈으로가기 버튼
+                onClick = onBackToHome,
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Text("⌂", fontSize = 20.sp, color = Color.White)
             }
+            Text( //주제 텍스트
+                text = topic,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center),
+                textAlign = TextAlign.Center
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -209,7 +224,7 @@ fun QuizScreen(
                 .background(Color(0xFFB3E5FC), shape = RoundedCornerShape(8.dp))
                 .padding(16.dp)
         ){
-            Text(
+            Text( // 문제
                 text = "${currentQuiz.question}",
                 fontSize = 20.sp,
                 color = Color.White,
@@ -232,7 +247,6 @@ fun QuizScreen(
         ) {
             currentQuiz.options.forEachIndexed { index, option ->
                 val isSelected = selectedAnswers[currentNum] == index
-
                 val backgroundColor = when{
                     isAnswerRevealed && isSelected  && index == currentQuiz.answer -> Color(0xD56CB46E) // 정답이면 초록색
                     isAnswerRevealed && isSelected  && index != currentQuiz.answer -> Color(0xDDE17D7D) // 오답이면 빨강
@@ -246,7 +260,8 @@ fun QuizScreen(
                                 playSound(context,true)
                             }
                             if(index != currentQuiz.answer) {
-                                wrongList.add(currentQuiz.copy(selectedAnswer = index))
+                                // copy 호출 시 주제가 null이 아니도록 지정
+                                wrongList.add(currentQuiz.copy(selectedAnswer = index, topic = currentQuiz.topic ?: "기본주제"))
                                 //오답이면 소리
                                 playSound(context,false)
                             } //오답 저장
@@ -273,7 +288,15 @@ fun loadQuizFromAssets(context: Context, fileName: String): List<Quiz>{
     val jsonString = context.assets.open(fileName)
         .bufferedReader()
         .use { it.readText() }
-    return Gson().fromJson(jsonString, Array<Quiz>::class.java).toList()
+    val quizList = Gson().fromJson(jsonString, Array<Quiz>::class.java).toList()
+
+    return quizList.map { quiz -> // json읽을 때 주제 없으면 빈 문자열 채우기
+        quiz.copy(
+            question = quiz.question ?: "질문 없음",
+            options = quiz.options ?: listOf("보기 없음"),
+            topic = quiz.topic ?: "기본주제"
+        )
+    }
 }
 
 @Composable
@@ -409,7 +432,8 @@ fun ResultScreen(
 @Composable
 fun WrongQuizScreen(
     wrongQuizList: List<Quiz> = listOf(),
-    onBackToHome: () -> Unit
+    onBackToHome: () -> Unit,
+    onDeleteQuiz: (Quiz) -> Unit
 ){
  // 틀린 문제 목록 표시
     Column (
@@ -419,21 +443,27 @@ fun WrongQuizScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)
-                .height(75.dp)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .height(80.dp)
+                .padding(horizontal = 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
                 text = "틀린 문제 다시보기",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f).padding(top = 15.dp)
+                color = Color.Black,
+                modifier = Modifier.padding(start = 20.dp, top = 20.dp)
             )
-            Button(
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button( //홈으로 돌아가기 버튼
                 onClick = onBackToHome,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                contentPadding = PaddingValues(0.dp), //버튼 내부 여백 제거
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                modifier = Modifier.size(48.dp).padding(top = 20.dp, end = 20.dp)
             ) {
-                Text("⌂", fontSize = 24.sp, color = Color.Black,modifier = Modifier.padding(top = 9.dp))
+                Text("⌂", fontSize = 24.sp, color = Color.Black)
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -441,9 +471,7 @@ fun WrongQuizScreen(
         //틀린 문제 목록
         if(wrongQuizList.isEmpty()){
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxSize().padding(16.dp),
                 contentAlignment = Alignment.Center
             ){
                 Text("틀린 문제가 없습니다!", fontSize = 18.sp)
@@ -451,10 +479,10 @@ fun WrongQuizScreen(
         }else{
             androidx.compose.foundation.lazy.LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 16.dp),
                 modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
             ) {
-                items(wrongQuizList.size){ index->
-                    val quiz = wrongQuizList[index]
+                items(wrongQuizList){ quiz->
 
                     Box(
                         modifier = Modifier
@@ -463,12 +491,33 @@ fun WrongQuizScreen(
                             .padding(12.dp)
                     ){
                         Column {
-                            Text(
-                                text = "${index + 1}. ${quiz.question}",
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .background(Color(0xFFECECEC), RoundedCornerShape(4.dp))
+                                        .padding(5.dp)
+                                ){
+                                    Text(
+                                        text = quiz.topic,
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
+                                }
+                                Text(
+                                    text = quiz.question,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f).padding(start = 8.dp)
+                                )
+                                IconButton(onClick = { onDeleteQuiz(quiz) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "삭제",
+                                        tint = Color.Red
+                                    )
+                                }
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
-
                             quiz.options.forEachIndexed { i, option ->
                                 val color = when{
                                     i == quiz.answer -> Color(0xD56CB46E)

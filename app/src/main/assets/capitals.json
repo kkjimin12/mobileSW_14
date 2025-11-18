@@ -2,52 +2,62 @@
   {
     "question": "대한민국의 수도는?",
     "options": ["서울", "부산", "인천", "대구"],
-    "answer": 0
+    "answer": 0,
+    "topic": "수도"
   },
   {
     "question": "일본의 수도는?",
     "options": ["오사카", "도쿄", "교토", "후쿠오카"],
-    "answer": 1
+    "answer": 1,
+    "topic": "수도"
   },
   {
     "question": "프랑스의 수도는?",
     "options": ["마르세유", "리옹", "파리", "니스"],
-    "answer": 2
+    "answer": 2,
+    "topic": "수도"
   },
   {
     "question": "이란의 수도는?",
     "options": ["말레", "테헤란", "다카", "뉴델리"],
-    "answer": 1
+    "answer": 1,
+    "topic": "수도"
   },
   {
     "question": "인도의 수도는?",
     "options": ["뉴델리", "서울", "카트만두", "도쿄"],
-    "answer": 0
+    "answer": 0,
+    "topic": "수도"
   },
   {
     "question": "중국의 수도는?",
     "options": ["아스타나", "리야드", "팀푸", "베이징"],
-    "answer": 3
+    "answer": 3,
+    "topic": "수도"
   },
   {
     "question": "싱가포르의 수도는?",
     "options": ["마르세유", "서울", "싱가포르", "니스"],
-    "answer": 2
+    "answer": 2,
+    "topic": "수도"
   },
   {
     "question": "아랍에미리트의 수도는?",
     "options": ["마닐라", "아부다비", "다마스쿠스", "팀푸"],
-    "answer": 1
+    "answer": 1,
+    "topic": "수도"
   },
   {
     "question": "필리핀의 수도는?",
     "options": ["마닐라", "앙카라", "바쿠", "도하"],
-    "answer": 0
+    "answer": 0,
+    "topic": "수도"
   },
   {
     "question": "그리스의 수도는?",
     "options": ["오슬로", "암스테르담", "아테네", "니스"],
-    "answer": 2
+    "answer": 2,
+    "topic": "수도"
   }
 
 ]

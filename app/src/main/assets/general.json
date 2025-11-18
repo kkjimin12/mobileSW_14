@@ -2,52 +2,62 @@
   {
     "question": "지구의 위성은?",
     "options": ["달", "태양", "화성", "금성"],
-    "answer": 0
+    "answer": 0,
+    "topic": "상식"
   },
   {
     "question": "사람의 혈액형 중 존재하지 않는 것은?",
     "options": ["A", "B", "O", "E"],
-    "answer": 3
+    "answer": 3,
+    "topic": "상식"
   },
   {
     "question": "제주도는 삼다도라고 불리기도 하는데 삼다에 해당하지 않는 것은?",
     "options": ["바람", "여자", "바다", "돌"],
-    "answer": 2
+    "answer": 2,
+    "topic": "상식"
   },
   {
     "question": "소음 측정단위인 데시벨의 단위는?",
     "options": ["km", "dm", "K", "dB"],
-    "answer": 3
+    "answer": 3,
+    "topic": "상식"
   },
   {
     "question": "국보1호였던 문화재의 이름은?",
     "options": ["광화문", "숭례문", "흥인지문", "돈의문"],
-    "answer": 1
+    "answer": 1,
+    "topic": "상식"
   },
   {
     "question": "우리나라 최초의 한글 소설로 전해지는 고전소설의 이름은?",
     "options": ["한중록", "춘향전", "구운전", "홍길동전"],
-    "answer": 3
+    "answer": 3,
+    "topic": "상식"
   },
   {
     "question": "불로장생을 꿈꿔 전 서계를 뒤져 불로초를 찾았던 왕의 이름은?",
     "options": ["진시황", "한무제", "주원장", "연산군"],
-    "answer": 0
+    "answer": 0,
+    "topic": "상식"
   },
   {
     "question": "평창동계올림픽이 열렸던 해는?",
     "options": ["2021", "2020", "2019", "2018"],
-    "answer": 3
+    "answer": 3,
+    "topic": "상식"
   },
   {
     "question": "학교 폭력 상담 전화는 몇번일까요?",
     "options": ["118", "117", "112", "119"],
-    "answer": 1
+    "answer": 1,
+    "topic": "상식"
   },
   {
     "question": "e-mail의 e는 무슨 약자일까요?",
     "options": ["easy", "email", "efficient", "electronic"],
-    "answer": 3
+    "answer": 3,
+    "topic": "상식"
   }
 
 ]
