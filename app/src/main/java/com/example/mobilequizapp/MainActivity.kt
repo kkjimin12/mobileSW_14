@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +35,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -75,6 +78,9 @@ fun QuizApp(){
             },
             onWrongQuizClick = {
                 currentScreen = "wrong"
+            },
+            onRankingClick = {
+                currentScreen = "ranking"
             }
         )
         "quiz" -> QuizScreen(
@@ -85,7 +91,7 @@ fun QuizApp(){
                 lastScore = score
                 currentQuizWrongList = wrongList.toList() // 지금 푼 퀴즈 오답 저장
                 // 기존 틀린 문제와 새롭게 틀린 문제 합치기 = 전체 오답
-                lastWrongList = (lastWrongList + wrongList).distinct()
+                lastWrongList = (lastWrongList + wrongList).distinct() // 중복 제거
                 currentScreen = "result"
             }
         )
@@ -111,7 +117,8 @@ fun QuizApp(){
 fun HomeScreen(
     context: Context,
     onTopicSelected: (String, String) -> Unit,
-    onWrongQuizClick: () -> Unit
+    onWrongQuizClick: () -> Unit,
+    onRankingClick: () -> Unit
 ){
  // 주제 선택, 틀린 문제 보기, 랭킹 보기
     Column(
@@ -131,6 +138,9 @@ fun HomeScreen(
         }
         Button(onClick = onWrongQuizClick){
             Text("오답 노트 보기")
+        }
+        Button(onClick = onRankingClick){
+            Text("랭킹 보기")
         }
     }
 }
@@ -202,7 +212,7 @@ fun QuizScreen(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
-                Text("⌂", fontSize = 20.sp, color = Color.White)
+                Text("⌂", fontSize = 24.sp, color = Color.White)
             }
             Text( //주제 텍스트
                 text = topic,
@@ -227,12 +237,12 @@ fun QuizScreen(
             Text( // 문제
                 text = "${currentQuiz.question}",
                 fontSize = 20.sp,
-                color = Color.White,
+                color = Color.Black,
                 modifier = Modifier.align(Alignment.Center)
             )
             Text( //몇번째 문제인지 표시
                 text = "${currentNum +1} / ${quizList.size}",
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 color = Color.Black,
                 modifier = Modifier.align(Alignment.BottomEnd)
             )
@@ -435,6 +445,10 @@ fun WrongQuizScreen(
     onBackToHome: () -> Unit,
     onDeleteQuiz: (Quiz) -> Unit
 ){
+    //정렬 상태
+    var isNewestFirst by remember { mutableStateOf(true) }
+    //정렬된 리스트
+    var sortedList = if (isNewestFirst) wrongQuizList else wrongQuizList.reversed()
  // 틀린 문제 목록 표시
     Column (
         modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))
@@ -468,7 +482,24 @@ fun WrongQuizScreen(
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        //틀린 문제 목록
+        //최신순과 오래된순 토글
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Color(0xFFF5F5F5)),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = if(isNewestFirst) "최신순 🔽" else "오래된순 🔽",
+                fontSize = 12.sp,
+                color = Color.Black,
+                modifier = Modifier
+                    .padding(end = 20.dp, bottom = 20.dp)
+                    .clickable{isNewestFirst = !isNewestFirst}
+
+            )
+        }
+
+        //정렬된 틀린 문제 목록
         if(wrongQuizList.isEmpty()){
             Box(
                 modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -482,7 +513,7 @@ fun WrongQuizScreen(
                 contentPadding = PaddingValues(bottom = 16.dp),
                 modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
             ) {
-                items(wrongQuizList){ quiz->
+                items(sortedList){ quiz->
 
                     Box(
                         modifier = Modifier
