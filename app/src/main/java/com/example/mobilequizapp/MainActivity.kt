@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
@@ -149,7 +150,9 @@ fun QuizApp(){
                 lastWrongList = lastWrongList - quizToDelete
             }
         )
-        "ranking" -> RankingScreen()
+        "ranking" -> RankingScreen(
+            onBackToHome = { currentScreen = "home" }
+        )
     }
 }
 
@@ -277,13 +280,13 @@ fun QuizScreen(
             Text( // 문제
                 text = "${currentQuiz.question}",
                 fontSize = 20.sp,
-                color = Color.Black,
+                color = Color.White,
                 modifier = Modifier.align(Alignment.Center)
             )
             Text( //몇번째 문제인지 표시
                 text = "${currentNum +1} / ${quizList.size}",
                 fontSize = 12.sp,
-                color = Color.Black,
+                color = Color.White,
                 modifier = Modifier.align(Alignment.BottomEnd)
             )
         }
@@ -609,6 +612,152 @@ fun WrongQuizScreen(
 }
 
 @Composable
-fun RankingScreen(){
- // 랭킹 표시
+fun RankingScreen(
+    onBackToHome: () -> Unit
+){
+    val context = LocalContext.current
+
+    // 저장된 기록 불러오기
+    var records by remember {
+        mutableStateOf(GameRecordManager.loadRecords(context))
+    }
+
+    // 점수/정답/시간 순으로 정렬
+    val sortedRecords = remember(records) {
+        records.sortedWith(
+            compareByDescending<GameRecord> { it.score }
+                .thenByDescending { it.correctCount }
+                .thenByDescending { it.timestamp }
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5F5))
+    ) {
+        // 상단 바 (제목 + 홈 버튼)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .height(80.dp)
+                .padding(horizontal = 0.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "게임 랭킹",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(start = 20.dp, top = 20.dp)
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = onBackToHome,
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(top = 20.dp, end = 20.dp)
+            ) {
+                Text("⌂", fontSize = 24.sp, color = Color.Black)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 기록 없을 때
+        if (sortedRecords.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "아직 플레이 기록이 없어요!",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        } else {
+            // 기록 있을 때 랭킹 리스트
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                itemsIndexed(sortedRecords) { index, record ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = if (index == 0) Color(0xFFFFF9C4) else Color.White,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
+                    ) {
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "#${index + 1}",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                                Text(
+                                    text = record.topic,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = "${record.score} 점",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "정답: ${record.correctCount} / ${record.totalQuestions}",
+                                fontSize = 14.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 전체 기록 삭제 버튼 (옵션)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(
+                    onClick = {
+                        GameRecordManager.clearRecords(context)
+                        records = emptyList()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFD32F2F)
+                    )
+                ) {
+                    Text("기록 전체 삭제", color = Color.White, fontSize = 12.sp)
+                }
+            }
+        }
+    }
 }
