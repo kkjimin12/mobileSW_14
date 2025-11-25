@@ -45,6 +45,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
@@ -59,6 +60,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun RankingScreenPreview() {
+    // 프리뷰니까 저장된 기록 대신 가짜 데이터로 표시
+    CompositionLocalProvider(LocalContext provides LocalContext.current) {
+        val mockRecords = listOf(
+            GameRecord("상식", 90, 9, 10, System.currentTimeMillis()),
+            GameRecord("수도", 70, 7, 10, System.currentTimeMillis() - 100000),
+        )
+
+        RankingScreen(
+            onBackToHome = {}
+        )
+    }
+}
+
 
 //랭킹 위한 게임 기록
 data class GameRecord(
@@ -244,7 +262,7 @@ fun QuizScreen(
         Box( // 주제와 뒤로가기
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Black, shape = RoundedCornerShape(8.dp))
+                .background(Color(0xFFFAFAFA), shape = RoundedCornerShape(8.dp))
 //                .padding(12.dp)
                 .height(65.dp)
         ){
@@ -274,7 +292,7 @@ fun QuizScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
-                .background(Color(0xFF0E1451), shape = RoundedCornerShape(8.dp))
+                .background(Color(0xFF4880EE), shape = RoundedCornerShape(8.dp))
                 .padding(16.dp)
         ){
             Text( // 문제
@@ -301,7 +319,7 @@ fun QuizScreen(
             currentQuiz.options.forEachIndexed { index, option ->
                 val isSelected = selectedAnswers[currentNum] == index
                 val backgroundColor = when{
-                    isAnswerRevealed && isSelected  && index == currentQuiz.answer -> Color(0xD56CB46E) // 정답이면 초록색
+                    isAnswerRevealed && isSelected  && index == currentQuiz.answer -> Color(0xFF1F42F5) // 정답이면 초록색
                     isAnswerRevealed && isSelected  && index != currentQuiz.answer -> Color(0xDDE17D7D) // 오답이면 빨강
                     else -> Color.White
                 }
@@ -361,8 +379,24 @@ fun ResultScreen(
     onWrongQuiz: () -> Unit
 ){
  // 점수 표시, 홈 버튼
+    val context = LocalContext.current
+
+    // 0문제일 때 0 나누기 방지
+    val safeTotal = if (totalQuestions == 0) 1 else totalQuestions
     val correctCount = totalQuestions - wrongCount
-    val score = (correctCount.toFloat() / totalQuestions * 100).toInt()
+    val score = (correctCount.toFloat() / safeTotal * 100).toInt()
+
+    LaunchedEffect(topic, totalQuestions, wrongCount) {
+        if (totalQuestions > 0) {
+            val record = GameRecord(
+                topic = topic,
+                score = score,
+                correctCount = correctCount,
+                totalQuestions = totalQuestions
+            )
+            GameRecordManager.saveRecord(context, record)
+        }
+    }
 
     Column (
         modifier = Modifier
@@ -698,7 +732,7 @@ fun RankingScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                color = if (index == 0) Color(0xFFFFF9C4) else Color.White,
+                                color = if (index == 0) Color(0xFF4880EE) else Color.White,
                                 shape = RoundedCornerShape(8.dp)
                             )
                             .padding(12.dp)
@@ -739,25 +773,7 @@ fun RankingScreen(
                 }
             }
 
-            // 전체 기록 삭제 버튼 (옵션)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Button(
-                    onClick = {
-                        GameRecordManager.clearRecords(context)
-                        records = emptyList()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFD32F2F)
-                    )
-                ) {
-                    Text("기록 전체 삭제", color = Color.White, fontSize = 12.sp)
-                }
-            }
+
         }
     }
 }
