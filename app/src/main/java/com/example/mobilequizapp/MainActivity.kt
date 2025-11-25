@@ -20,6 +20,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -180,31 +182,147 @@ fun HomeScreen(
     onTopicSelected: (String, String) -> Unit,
     onWrongQuizClick: () -> Unit,
     onRankingClick: () -> Unit
-){
- // 주제 선택, 틀린 문제 보기, 랭킹 보기
-    Column(
-        modifier = Modifier.fillMaxSize().padding(top = 50.dp),
-    ){
-        Button(onClick = {onTopicSelected("수도","capitals.json")}){
-            Text("수도")
-        }
-        Button(onClick = {onTopicSelected("상식","general.json")}){
-            Text("상식")
-        }
-        Button(onClick = {onTopicSelected("사자성어","idioms.json")}){
-            Text("사자성어")
-        }
-        Button(onClick = {onTopicSelected("넌센스","nonsense.json")}){
-            Text("넌센스")
-        }
-        Button(onClick = onWrongQuizClick){
-            Text("오답 노트 보기")
-        }
-        Button(onClick = onRankingClick){
-            Text("랭킹 보기")
+) {
+    // 그라데이션 배경
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color(0xFFD1E4FF), Color.White)
+                )
+            )
+            .padding(horizontal = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // 상단 제목
+            Text(
+                text = "Quiz App",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            // 2×2 Grid
+            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    HomeMenuCard(
+                        iconRes = R.drawable.general,    // 사자성어
+                        title = "사자성어 퀴즈",
+                        onClick = { onTopicSelected("사자성어", "idioms.json") }
+                    )
+                    HomeMenuCard(
+                        iconRes = R.drawable.capital,    // 수도
+                        title = "수도 퀴즈",
+                        onClick = { onTopicSelected("수도", "capitals.json") }
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    HomeMenuCard(
+                        iconRes = R.drawable.nonsense,  // 넌센스
+                        title = "넌센스 퀴즈",
+                        onClick = { onTopicSelected("넌센스", "nonsense.json") }
+                    )
+                    HomeMenuCard(
+                        iconRes = R.drawable.general,    // 상식
+                        title = "상식 퀴즈",
+                        onClick = { onTopicSelected("상식", "general.json") }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // 오답노트 버튼
+            HomeLargeButton(
+                iconRes = R.drawable.check,
+                text = "오답노트",
+                onClick = onWrongQuizClick
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 랭킹 버튼
+            HomeLargeButton(
+                iconRes = R.drawable.ranking,
+                text = "랭킹",
+                onClick = onRankingClick
+            )
         }
     }
 }
+@Composable
+fun HomeMenuCard(
+    iconRes: Int,
+    title: String,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(150.dp)
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(90.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = title,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+@Composable
+fun HomeLargeButton(
+    iconRes: Int,
+    text: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(32.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.Black
+        )
+    }
+}
+
 
 //퀴즈 데이터 저장 클래스
 data class Quiz(
