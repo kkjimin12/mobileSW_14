@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
 
 
@@ -55,6 +56,45 @@ class MainActivity : ComponentActivity() {
         setContent {
             QuizApp()
         }
+    }
+}
+
+//랭킹 위한 게임 기록
+data class GameRecord(
+    val topic: String,           // 주제
+    val score: Int,              // 점수 (0-100)
+    val correctCount: Int,       // 정답 수
+    val totalQuestions: Int,     // 전체 문제 수
+    val timestamp: Long = System.currentTimeMillis() // 게임 시간
+)
+
+//SharedPreferences에 게임 기록 저장/불러오기
+object GameRecordManager {
+    private const val PREFS_NAME = "quiz_records"
+    private const val KEY_RECORDS = "game_records"
+
+    fun saveRecord(context: Context, record: GameRecord) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val records = loadRecords(context).toMutableList()
+        records.add(record)
+
+        val gson = Gson()
+        val json = gson.toJson(records)
+        prefs.edit().putString(KEY_RECORDS, json).apply()
+    }
+
+    fun loadRecords(context: Context): List<GameRecord> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val json = prefs.getString(KEY_RECORDS, null) ?: return emptyList()
+
+        val gson = Gson()
+        val type = object : TypeToken<List<GameRecord>>() {}.type
+        return gson.fromJson(json, type) ?: emptyList()
+    }
+
+    fun clearRecords(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().remove(KEY_RECORDS).apply()
     }
 }
 
@@ -231,7 +271,7 @@ fun QuizScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
-                .background(Color(0xFFB3E5FC), shape = RoundedCornerShape(8.dp))
+                .background(Color(0xFF0E1451), shape = RoundedCornerShape(8.dp))
                 .padding(16.dp)
         ){
             Text( // 문제
