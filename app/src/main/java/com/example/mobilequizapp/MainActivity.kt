@@ -21,6 +21,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -63,23 +64,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun RankingScreenPreview() {
-    // 프리뷰니까 저장된 기록 대신 가짜 데이터로 표시
-    CompositionLocalProvider(LocalContext provides LocalContext.current) {
-        val mockRecords = listOf(
-            GameRecord("상식", 90, 9, 10, System.currentTimeMillis()),
-            GameRecord("수도", 70, 7, 10, System.currentTimeMillis() - 100000),
-        )
+fun HomeScreenPreview() {
+    val context = LocalContext.current
 
-        RankingScreen(
-            onBackToHome = {}
-        )
-    }
+    HomeScreen(
+        context = context,
+        onTopicSelected = { _, _ -> },
+        onWrongQuizClick = {},
+        onRankingClick = {}
+    )
 }
-
-
 //랭킹 위한 게임 기록
 data class GameRecord(
     val topic: String,           // 주제
@@ -192,7 +188,7 @@ fun HomeScreen(
                     colors = listOf(Color(0xFFD1E4FF), Color.White)
                 )
             )
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 30.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -206,15 +202,17 @@ fun HomeScreen(
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 40.dp)
             )
 
             // 2×2 Grid
-            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.wrapContentWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+
                 ) {
                     HomeMenuCard(
                         iconRes = R.drawable.general,    // 사자성어
@@ -229,8 +227,8 @@ fun HomeScreen(
                 }
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.wrapContentWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     HomeMenuCard(
                         iconRes = R.drawable.nonsense,  // 넌센스
@@ -265,6 +263,8 @@ fun HomeScreen(
         }
     }
 }
+
+//게임 종류 선택 카드
 @Composable
 fun HomeMenuCard(
     iconRes: Int,
@@ -294,6 +294,8 @@ fun HomeMenuCard(
         )
     }
 }
+
+//오답노트, 랭킹 버튼
 @Composable
 fun HomeLargeButton(
     iconRes: Int,
@@ -302,7 +304,7 @@ fun HomeLargeButton(
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
+            .width(320.dp)
             .background(Color.White, RoundedCornerShape(12.dp))
             .clickable { onClick() }
             .padding(16.dp),
