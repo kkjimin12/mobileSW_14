@@ -69,15 +69,13 @@ class MainActivity : ComponentActivity() {
 fun HomeScreenPreview() {
     val context = LocalContext.current
 
-    HomeScreen(
-        context = context,
-        onTopicSelected = { _, _ -> },
-        onWrongQuizClick = {},
-        onRankingClick = {}
-    )
+    RankingScreen {
+
+    }
 }
 //랭킹 위한 게임 기록
 data class GameRecord(
+    val nickname: String = "",
     val topic: String,           // 주제
     val score: Int,              // 점수 (0-100)
     val correctCount: Int,       // 정답 수
@@ -117,7 +115,10 @@ object GameRecordManager {
 
 @Composable
 fun QuizApp(){
-    var currentScreen by remember {mutableStateOf("home")}
+
+    var currentScreen by remember { mutableStateOf("name") }
+    var nickname by remember { mutableStateOf("") }
+
     var currentTopic by remember {mutableStateOf("")}
     var currentQuizList by remember {mutableStateOf(listOf<Quiz>())}
     var lastScore by remember {mutableStateOf(0)}
@@ -126,6 +127,14 @@ fun QuizApp(){
     val context = LocalContext.current
 
     when(currentScreen){
+
+        "name" -> NameScreen(
+            onConfirm = { inputName ->
+                nickname = inputName
+                currentScreen = "home"
+            }
+        )
+
         "home" -> HomeScreen(
             context = context,
             onTopicSelected = { topicName, fileName ->
@@ -153,6 +162,7 @@ fun QuizApp(){
             }
         )
         "result" -> ResultScreen(
+            nickname = nickname,
             topic = currentTopic,
             totalQuestions = currentQuizList.size,
             wrongCount = currentQuizWrongList.size,
@@ -260,6 +270,61 @@ fun HomeScreen(
                 text = "랭킹",
                 onClick = onRankingClick
             )
+        }
+    }
+}
+
+@Composable
+fun NameScreen(
+    onConfirm: (String) -> Unit
+) {
+    var nameInput by remember { mutableStateOf("") }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFE7F1FF)),   // 배경색 E7F1FF
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(24.dp)
+                .background(Color.White, RoundedCornerShape(16.dp))
+                .padding(horizontal = 24.dp, vertical = 32.dp)
+        ) {
+            Text(
+                text = "닉네임을 입력하세요",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4880EE)      // 글자색 4880EE
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            androidx.compose.material3.TextField(
+                value = nameInput,
+                onValueChange = { nameInput = it },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("예) 별이") }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    if (nameInput.isNotBlank()) {
+                        onConfirm(nameInput.trim())
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4880EE)
+                )
+            ) {
+                Text("시작하기", color = Color.White, fontSize = 16.sp)
+            }
         }
     }
 }
@@ -492,6 +557,7 @@ fun loadQuizFromAssets(context: Context, fileName: String): List<Quiz>{
 
 @Composable
 fun ResultScreen(
+    nickname: String,
     topic: String = "",
     totalQuestions: Int = 0,
     wrongCount: Int = 0,
@@ -509,6 +575,7 @@ fun ResultScreen(
     LaunchedEffect(topic, totalQuestions, wrongCount) {
         if (totalQuestions > 0) {
             val record = GameRecord(
+                nickname = nickname,
                 topic = topic,
                 score = score,
                 correctCount = correctCount,
