@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
@@ -116,8 +117,10 @@ object GameRecordManager {
 @Composable
 fun QuizApp(){
 
-    var currentScreen by remember { mutableStateOf("name") }
-    var nickname by remember { mutableStateOf("") }
+    var currentScreen by remember { mutableStateOf("home") }
+    var currentNickname by remember { mutableStateOf("") }   // ⭐ 이번 게임 닉네임
+    var pendingTopic by remember { mutableStateOf("") }       // 선택한 주제명
+    var pendingFileName by remember { mutableStateOf("") }
 
     var currentTopic by remember {mutableStateOf("")}
     var currentQuizList by remember {mutableStateOf(listOf<Quiz>())}
@@ -128,19 +131,15 @@ fun QuizApp(){
 
     when(currentScreen){
 
-        "name" -> NameScreen(
-            onConfirm = { inputName ->
-                nickname = inputName
-                currentScreen = "home"
-            }
-        )
+
 
         "home" -> HomeScreen(
             context = context,
             onTopicSelected = { topicName, fileName ->
                 currentQuizList = loadQuizFromAssets(context,fileName)
-                currentTopic = topicName
-                currentScreen = "quiz"
+                pendingTopic = topicName
+                pendingFileName = fileName
+                currentScreen = "name"
             },
             onWrongQuizClick = {
                 currentScreen = "wrong"
@@ -149,6 +148,20 @@ fun QuizApp(){
                 currentScreen = "ranking"
             }
         )
+
+        "name" -> NameScreen(
+            onConfirm = { nickname ->
+                currentNickname = nickname
+                currentTopic = pendingTopic
+                currentQuizList = loadQuizFromAssets(context, pendingFileName)
+                currentScreen = "quiz"
+            },
+            onCancel = {
+                currentScreen = "home"
+            }
+        )
+
+
         "quiz" -> QuizScreen(
             topic = currentTopic,
             quizList = currentQuizList,
@@ -162,7 +175,7 @@ fun QuizApp(){
             }
         )
         "result" -> ResultScreen(
-            nickname = nickname,
+            nickname = currentNickname,
             topic = currentTopic,
             totalQuestions = currentQuizList.size,
             wrongCount = currentQuizWrongList.size,
@@ -276,7 +289,8 @@ fun HomeScreen(
 
 @Composable
 fun NameScreen(
-    onConfirm: (String) -> Unit
+    onConfirm: (String) -> Unit,
+    onCancel: () -> Unit
 ) {
     var nameInput by remember { mutableStateOf("") }
 
@@ -307,23 +321,40 @@ fun NameScreen(
                 onValueChange = { nameInput = it },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("예) 별이") }
+                placeholder = { Text("예) 가나디") }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = {
-                    if (nameInput.isNotBlank()) {
-                        onConfirm(nameInput.trim())
-                    }
-                },
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4880EE)
-                )
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("시작하기", color = Color.White, fontSize = 16.sp)
+                // 취소 버튼
+                Button(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFCCCCCC)
+                    )
+                ) {
+                    Text("취소", color = Color.Black)
+                }
+
+                // 시작하기 버튼
+                Button(
+                    onClick = {
+                        if (nameInput.isNotBlank()) {
+                            onConfirm(nameInput.trim())
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4880EE)
+                    )
+                ) {
+                    Text("시작하기", color = Color.White, fontSize = 16.sp)
+                }
             }
         }
     }
@@ -441,7 +472,7 @@ fun QuizScreen(
     Column ( // 상단 제목과 뒤로가기 열
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFAFAFA)) //배경 연한 회색
+            .background(Color(0xFFE7F1FF))
             .padding(top = 40.dp, start = 16.dp, end = 16.dp)
     ){
         Box( // 주제와 뒤로가기
@@ -458,13 +489,13 @@ fun QuizScreen(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
-                Text("⌂", fontSize = 24.sp, color = Color.White)
+                Text("⌂", fontSize = 24.sp, color = Color(0xFF4880EE))
             }
             Text( //주제 텍스트
                 text = topic,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = Color(0xFF4880EE),
                 modifier = Modifier.align(Alignment.Center),
                 textAlign = TextAlign.Center
             )
@@ -477,7 +508,7 @@ fun QuizScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
-                .background(Color(0xFF4880EE), shape = RoundedCornerShape(8.dp))
+                .background(Color(0xFF3383F9), shape = RoundedCornerShape(8.dp))
                 .padding(16.dp)
         ){
             Text( // 문제
@@ -503,11 +534,36 @@ fun QuizScreen(
         ) {
             currentQuiz.options.forEachIndexed { index, option ->
                 val isSelected = selectedAnswers[currentNum] == index
-                val backgroundColor = when{
-                    isAnswerRevealed && isSelected  && index == currentQuiz.answer -> Color(0xFF1F42F5) // 정답이면 초록색
-                    isAnswerRevealed && isSelected  && index != currentQuiz.answer -> Color(0xDDE17D7D) // 오답이면 빨강
-                    else -> Color.White
+
+                val (bgColor, borderColor, textColor) = when {
+                    // 정답 선택
+                    isAnswerRevealed && isSelected && index == currentQuiz.answer -> Triple(
+                        Color(0xFFEBF4FF),   // 배경: EBF4FF
+                        Color(0xFF3383F9),   // 테두리: 3383F9
+                        Color(0xFF3383F9)    // 글자: 3383F9
+                    )
+
+                    // 오답 선택
+                    isAnswerRevealed && isSelected && index != currentQuiz.answer -> Triple(
+                        Color(0xFFFFEFF1),   // 배경: FFEFF1
+                        Color(0xFFF24554),   // 테두리: F24554
+                        Color(0xFFF24554)    // 글자: F24554
+                    )
+
+                    // 평소 상태
+                    else -> Triple(
+                        Color.White,         // 배경: 흰색
+                        Color(0xFFFFFFFF),   // 테두리: 연한 회색
+                        Color.Black          // 글자: 검정
+                    )
                 }
+
+//                val backgroundColor = when{
+//                    isAnswerRevealed && isSelected  && index == currentQuiz.answer -> Color(0xFFEBF4FF) // 정답이면 초록색
+//                    isAnswerRevealed && isSelected  && index != currentQuiz.answer -> Color(0xFFFFEFF1) // 오답이면 빨강
+//                    else -> Color.White
+//                }
+
                 Button(
                     onClick = {
                         if(!isAnswerRevealed){
@@ -524,15 +580,22 @@ fun QuizScreen(
                             isAnswerRevealed = true // 색상 표시
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(60.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .border(
+                            width = 2.dp,
+                            color = borderColor,
+                            shape = RoundedCornerShape(12.dp)
+                        ),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = backgroundColor
+                        containerColor = bgColor
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row (verticalAlignment = Alignment.CenterVertically){
-                        Text("${index+1}. ", fontSize = 16.sp, color = Color.Black)
-                        Text(option, fontSize = 16.sp, color = Color.Black)
+                        Text("${index+1}. ", fontSize = 16.sp, color = textColor,  fontWeight = FontWeight.SemiBold)
+                        Text(option, fontSize = 16.sp, color = textColor,  fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -607,7 +670,7 @@ fun ResultScreen(
         }
         Text(
             text = buildAnnotatedString {
-                withStyle (style = SpanStyle(color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)) {
+                withStyle (style = SpanStyle(color = Color(0xFF4880EE), fontWeight = FontWeight.Bold)) {
                     append(topic) // 주제 녹색
                 }
                 withStyle(style = SpanStyle(color = Color.Black, fontWeight = FontWeight.Bold)) {
@@ -855,43 +918,47 @@ fun RankingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(Color(0xFFE7F1FF))                 // 배경색 E7F1FF
+            .padding(horizontal = 24.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 상단 바 (제목 + 홈 버튼)
+        // 상단 홈 버튼 (오른쪽 상단 작은 아이콘 정도)
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .height(80.dp)
-                .padding(horizontal = 0.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "게임 랭킹",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.padding(start = 20.dp, top = 20.dp)
-            )
-
             Spacer(modifier = Modifier.weight(1f))
-
             Button(
                 onClick = onBackToHome,
                 contentPadding = PaddingValues(0.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(top = 20.dp, end = 20.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                elevation = ButtonDefaults.buttonElevation(0.dp),
             ) {
                 Text("⌂", fontSize = 24.sp, color = Color.Black)
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 왕관 이미지
+        Image(
+            painter = painterResource(R.drawable.crown),
+            contentDescription = null,
+            modifier = Modifier
+                .size(80.dp)
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 기록 없을 때
+        Text(
+            text = "RANKING",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         if (sortedRecords.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -906,61 +973,76 @@ fun RankingScreen(
                 )
             }
         } else {
-            // 기록 있을 때 랭킹 리스트
             androidx.compose.foundation.lazy.LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 itemsIndexed(sortedRecords) { index, record ->
+
+                    // 🔹 순위별 배경색/글자색 설정
+                    val (bgColor, mainTextColor, subTextColor) = when (index) {
+                        0 -> Triple(Color(0xFF1F4EF5), Color.White, Color(0xFFEFEFFF)) // 1위
+                        1 -> Triple(Color(0xFF4880EE), Color.White, Color(0xFFEFEFFF)) // 2위
+                        2 -> Triple(Color(0xFF83B4F9), Color.Black, Color(0xFF222222)) // 3위
+                        else -> Triple(Color.White, Color.Black, Color(0xFF555555))    // 나머지
+                    }
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                color = if (index == 0) Color(0xFF4880EE) else Color.White,
-                                shape = RoundedCornerShape(8.dp)
+                                color = bgColor,
+                                shape = RoundedCornerShape(16.dp)   // corner radius 16
                             )
-                            .padding(12.dp)
+                            .padding(vertical = 16.dp, horizontal = 20.dp)
                     ) {
                         Column {
+                            // 윗줄: 순위 + 닉네임 / 점수
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "#${index + 1}",
-                                    fontSize = 20.sp,
+                                    text = "${index + 1}위 ${record.nickname}",
+                                    fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(end = 12.dp)
-                                )
-                                Text(
-                                    text = record.topic,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                                    color = mainTextColor,
                                     modifier = Modifier.weight(1f)
                                 )
                                 Text(
-                                    text = "${record.score} 점",
+                                    text = "${record.score}점",
                                     fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = mainTextColor
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            Text(
-                                text = "정답: ${record.correctCount} / ${record.totalQuestions}",
-                                fontSize = 14.sp,
-                                color = Color.DarkGray
-                            )
+                            // 아랫줄: 주제 / 정답 수
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = record.topic,
+                                    fontSize = 14.sp,
+                                    color = subTextColor,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = "정답: ${record.correctCount} / ${record.totalQuestions}",
+                                    fontSize = 14.sp,
+                                    color = subTextColor
+                                )
+                            }
+
                         }
                     }
                 }
             }
-
-
         }
     }
 }
