@@ -648,119 +648,184 @@ fun ResultScreen(
         }
     }
 
-    Column (
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 150.dp, bottom = 150.dp, start = 24.dp, end = 24.dp)
-            .background(Color.White, RoundedCornerShape(12.dp)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ){
-        Box( // 트로피 그림
+            .background(Color(0xFFE7F1FF)),
+        contentAlignment = Alignment.Center
+    ) {
+        // 안쪽 카드
+        Column(
             modifier = Modifier
-                .size(200.dp)
-                .padding(bottom = 24.dp)
-                .background(Color.White)
-        ){
-            Image(
-                painter = painterResource(R.drawable.prize2),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-        Text(
-            text = buildAnnotatedString {
-                withStyle (style = SpanStyle(color = Color(0xFF4880EE), fontWeight = FontWeight.Bold)) {
-                    append(topic) // 주제 녹색
-                }
-                withStyle(style = SpanStyle(color = Color.Black, fontWeight = FontWeight.Bold)) {
-                    append(" 퀴즈 성공!") // 퀴즈 성공 검은색
-                }
-            },
-            fontSize = 24.sp
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "축하합니다!",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 문제 풀이 수, 오답 수, 최종 점수 하나의 박스
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .background(Color(0xFFF5F5F5), RoundedCornerShape(12.dp))
-                .padding(vertical = 24.dp, horizontal = 16.dp,)
+                .padding(horizontal = 32.dp)
+                .background(Color.White, RoundedCornerShape(24.dp))
+                .padding(vertical = 32.dp, horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxWidth()
+            // 🏆 트로피 이미지 (ranking.png)
+            Image(
+                painter = painterResource(R.drawable.ranking),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(120.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 주제 + "퀴즈 완료!"
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            color = Color(0xFF4880EE),
+                            fontWeight = FontWeight.Bold
+                        )
+                    ) {
+                        append(topic)
+                    }
+                    withStyle(
+                        style = SpanStyle(
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                    ) {
+                        append(" 퀴즈 완료!")
+                    }
+                },
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ✅ 문제풀이/정답/오답 + 최종 점수 박스
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFDFDFD), RoundedCornerShape(16.dp))
+                    .padding(vertical = 20.dp, horizontal = 16.dp)
             ) {
-                Row(
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally,modifier = Modifier.weight(1f)) {
-                        Text("문제 풀이 수", fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text("$totalQuestions", fontSize = 20.sp,fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("문제풀이 수", fontSize = 12.sp, color = Color(0xFF777777))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "$totalQuestions",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("정답 수", fontSize = 12.sp, color = Color(0xFF777777))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "$correctCount",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("오답 수", fontSize = 12.sp, color = Color(0xFF777777))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "$wrongCount",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally,modifier = Modifier.weight(1f)) {
-                        Text("정답 수", fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text("$correctCount",  fontSize = 20.sp,fontWeight = FontWeight.Bold)
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally,modifier = Modifier.weight(1f)) {
-                        Text("오답 수", fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text("$wrongCount",  fontSize = 20.sp,fontWeight = FontWeight.Bold)
-                    }
+
+                    // ⭐ 점수 표시 색 : 4880EE
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            ) {
+                                append("최종 점수 : ")
+                            }
+                            withStyle(
+                                style = SpanStyle(
+                                    color = Color(0xFF4880EE),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            ) {
+                                append("$score")
+                            }
+                            withStyle(
+                                style = SpanStyle(
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            ) {
+                                append("점")
+                            }
+                        },
+                        fontSize = 18.sp
+                    )
                 }
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle (style = SpanStyle(color = Color.Black, fontWeight = FontWeight.Bold)){
-                            append("최종 점수 : ")
-                        }
-                        withStyle (style = SpanStyle(color = Color.Red, fontWeight = FontWeight.Bold)){
-                            append("$score")
-                        }
-                        withStyle (style = SpanStyle(color = Color.Black, fontWeight = FontWeight.Bold)){
-                            append(" 점")
-                        }
-                    },
-                    fontSize = 20.sp
-                )
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        // 버튼, 글자 수와 상관없이 크기 동일
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
-        ) {
-            Button(
-                onClick = onBackToHome,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50)
-                )
+            // 🔵 홈 / 오답보기 버튼 (색: 4880EE)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
             ) {
-                Text(text = "홈")
-            }
-            Button(
-                onClick = onWrongQuiz,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4CAF50)
-                )
-            ) {
-                Text(text = "오답보기")
+                Button(
+                    onClick = onBackToHome,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4880EE)
+                    )
+                ) {
+                    Text(
+                        text = "홈",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Button(
+                    onClick = onWrongQuiz,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4880EE)
+                    )
+                ) {
+                    Text(
+                        text = "오답보기",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
@@ -976,12 +1041,12 @@ fun RankingScreen(
             androidx.compose.foundation.lazy.LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(32.dp),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 itemsIndexed(sortedRecords) { index, record ->
 
-                    // 🔹 순위별 배경색/글자색 설정
+                    //s 순위별 배경색/글자색 설정
                     val (bgColor, mainTextColor, subTextColor) = when (index) {
                         0 -> Triple(Color(0xFF1F4EF5), Color.White, Color(0xFFEFEFFF)) // 1위
                         1 -> Triple(Color(0xFF4880EE), Color.White, Color(0xFFEFEFFF)) // 2위
@@ -994,7 +1059,7 @@ fun RankingScreen(
                             .fillMaxWidth()
                             .background(
                                 color = bgColor,
-                                shape = RoundedCornerShape(16.dp)   // corner radius 16
+                                shape = RoundedCornerShape(24.dp)   // corner radius 24
                             )
                             .padding(vertical = 16.dp, horizontal = 20.dp)
                     ) {
