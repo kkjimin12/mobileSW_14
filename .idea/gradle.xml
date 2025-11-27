@@ -9,8 +9,8 @@
         <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/../../../../동국대/3-2/모바일소프트웨어/mobileSW_14" />
+            <option value="$PROJECT_DIR$/../../../../동국대/3-2/모바일소프트웨어/mobileSW_14/app" />
           </set>
         </option>
       </GradleProjectSettings>
