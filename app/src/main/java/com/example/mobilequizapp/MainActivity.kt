@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -283,6 +286,7 @@ fun HomeScreen(
                 text = "랭킹",
                 onClick = onRankingClick
             )
+
         }
     }
 }
@@ -843,113 +847,171 @@ fun WrongQuizScreen(
     var sortedList = if (isNewestFirst) wrongQuizList else wrongQuizList.reversed()
  // 틀린 문제 목록 표시
     Column (
-        modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))
+        modifier = Modifier.fillMaxSize().background(Color(0xFFFFFFFF)).verticalScroll(rememberScrollState())
     ){
         Row (
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
-                .height(80.dp)
-                .padding(horizontal = 0.dp),
+                .padding(horizontal = 20.dp, vertical = 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
                 text = "틀린 문제 다시보기",
-                fontSize = 20.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
-                modifier = Modifier.padding(start = 20.dp, top = 20.dp)
+
             )
             Spacer(modifier = Modifier.weight(1f))
 
             Button( //홈으로 돌아가기 버튼
                 onClick = onBackToHome,
                 contentPadding = PaddingValues(0.dp), //버튼 내부 여백 제거
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                 modifier = Modifier.size(48.dp).padding(top = 20.dp, end = 20.dp)
             ) {
                 Text("⌂", fontSize = 24.sp, color = Color.Black)
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        //Spacer(modifier = Modifier.height(16.dp))
 
         //최신순과 오래된순 토글
         Row(
-            modifier = Modifier.fillMaxWidth().background(Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
-            Spacer(modifier = Modifier.weight(1f))
+            //Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = if(isNewestFirst) "최신순 🔽" else "오래된순 🔽",
-                fontSize = 12.sp,
-                color = Color.Black,
-                modifier = Modifier
-                    .padding(end = 20.dp, bottom = 20.dp)
-                    .clickable{isNewestFirst = !isNewestFirst}
-
+                text = buildAnnotatedString {
+                    withStyle(
+                        SpanStyle(
+                            color = Color(0xFF1F4EF5),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    ) { append("정답") }
+                    append(" / ")
+                    withStyle(
+                        SpanStyle(
+                            color = Color(0xFFF24554),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    ) { append("내가 고른 답") }
+                },
+                fontSize = 16.sp
             )
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clickable { isNewestFirst = !isNewestFirst }
+            ) {
+                Text(
+                    text = if (isNewestFirst) "최신순" else "오래된순",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Image(
+                    painter = painterResource(R.drawable.pin),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
+        Spacer(modifier = Modifier.height(16.dp))
 
         //정렬된 틀린 문제 목록
         if(wrongQuizList.isEmpty()){
             Box(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
+                modifier = Modifier.fillMaxSize().padding(24.dp),
                 contentAlignment = Alignment.Center
             ){
                 Text("틀린 문제가 없습니다!", fontSize = 18.sp)
             }
         }else{
-            androidx.compose.foundation.lazy.LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 16.dp),
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                //contentPadding = PaddingValues(bottom = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             ) {
-                items(sortedList){ quiz->
+                sortedList.forEach { quiz ->
 
+                    // 흰색 카드 + drop shadow
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.White, RoundedCornerShape(8.dp))
-                            .padding(12.dp)
-                    ){
+                            .shadow(
+                                elevation = 20.dp,
+                                shape = RoundedCornerShape(16.dp),
+                                ambientColor = Color(0x40000000), // 25% 블랙
+                                spotColor = Color(0x40000000)
+                            )
+                            .background(Color.White, RoundedCornerShape(16.dp))
+                            .padding(vertical = 16.dp, horizontal = 16.dp)
+                    ) {
                         Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // 주제 표시 pill
                                 Box(
                                     contentAlignment = Alignment.Center,
                                     modifier = Modifier
-                                        .background(Color(0xFFECECEC), RoundedCornerShape(4.dp))
-                                        .padding(5.dp)
-                                ){
+                                        .background(
+                                            Color(0xFFEBF4FF),
+                                            RoundedCornerShape(40.dp)
+                                        )
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
                                     Text(
                                         text = quiz.topic,
                                         fontSize = 12.sp,
-                                        color = Color.Gray
+                                        color = Color(0xFF1F4EF5),
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
                                 Text(
                                     text = quiz.question,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.weight(1f).padding(start = 8.dp)
+                                    fontSize = 14.sp,
+                                    color = Color.Black,
+                                    modifier = Modifier.weight(1f)
                                 )
-                                IconButton(onClick = { onDeleteQuiz(quiz) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "삭제",
-                                        tint = Color.Red
-                                    )
-                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+
+                                Image(
+                                    painter = painterResource(R.drawable.trash),
+                                    contentDescription = "삭제",
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clickable { onDeleteQuiz(quiz) }
+                                )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // 보기들
                             quiz.options.forEachIndexed { i, option ->
-                                val color = when{
-                                    i == quiz.answer -> Color(0xD56CB46E)
-                                    i == quiz.selectedAnswer -> Color(0xDDE17D7D)
+                                val color = when {
+                                    // 정답 (파란색)
+                                    i == quiz.answer -> Color(0xFF1F4EF5)
+                                    // 내가 고른 오답 (빨간색)
+                                    i == quiz.selectedAnswer -> Color(0xFFF24554)
                                     else -> Color.Black
                                 }
+
                                 Text(
-                                    text = "${i + 1}. $option",
-                                    color = color
+                                    text = "${i + 1}) $option",
+                                    color = color,
+                                    fontSize = 14.sp
                                 )
                             }
                         }
@@ -957,6 +1019,7 @@ fun WrongQuizScreen(
                 }
             }
         }
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -1109,5 +1172,6 @@ fun RankingScreen(
                 }
             }
         }
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
