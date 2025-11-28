@@ -56,6 +56,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class MainActivity : ComponentActivity() {
@@ -241,7 +244,7 @@ fun HomeScreen(
 
                 ) {
                     HomeMenuCard(
-                        iconRes = R.drawable.general,    // 사자성어
+                        iconRes = R.drawable.idioms,    // 사자성어
                         title = "사자성어 퀴즈",
                         onClick = { onTopicSelected("사자성어", "idioms.json") }
                     )
@@ -286,6 +289,9 @@ fun HomeScreen(
                 text = "랭킹",
                 onClick = onRankingClick
             )
+
+
+
 
         }
     }
@@ -1116,6 +1122,10 @@ fun RankingScreen(
                         2 -> Triple(Color(0xFF83B4F9), Color.Black, Color(0xFF222222)) // 3위
                         else -> Triple(Color.White, Color.Black, Color(0xFF555555))    // 나머지
                     }
+                    val dateText = remember(record.timestamp) {
+                        val formatter = SimpleDateFormat("MM.dd", Locale.getDefault())
+                        formatter.format(Date(record.timestamp))
+                    }
 
                     Box(
                         modifier = Modifier
@@ -1149,13 +1159,13 @@ fun RankingScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // 아랫줄: 주제 / 정답 수
+                            // 아랫줄: 주제 , 날짜 / 정답 수
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = record.topic,
+                                    text = "${record.topic} / $dateText",
                                     fontSize = 14.sp,
                                     color = subTextColor,
                                     modifier = Modifier.weight(1f)
