@@ -82,7 +82,7 @@ fun HomeScreenPreview() {
 }
 //랭킹 위한 게임 기록
 data class GameRecord(
-    val nickname: String = "",
+
     val topic: String,           // 주제
     val score: Int,              // 점수 (0-100)
     val correctCount: Int,       // 정답 수
@@ -124,9 +124,7 @@ object GameRecordManager {
 fun QuizApp(){
 
     var currentScreen by remember { mutableStateOf("home") }
-    var currentNickname by remember { mutableStateOf("") }   // ⭐ 이번 게임 닉네임
-    var pendingTopic by remember { mutableStateOf("") }       // 선택한 주제명
-    var pendingFileName by remember { mutableStateOf("") }
+
 
     var currentTopic by remember {mutableStateOf("")}
     var currentQuizList by remember {mutableStateOf(listOf<Quiz>())}
@@ -143,9 +141,8 @@ fun QuizApp(){
             context = context,
             onTopicSelected = { topicName, fileName ->
                 currentQuizList = loadQuizFromAssets(context,fileName)
-                pendingTopic = topicName
-                pendingFileName = fileName
-                currentScreen = "name"
+                currentTopic = topicName
+                currentScreen = "quiz"
             },
             onWrongQuizClick = {
                 currentScreen = "wrong"
@@ -155,17 +152,6 @@ fun QuizApp(){
             }
         )
 
-        "name" -> NameScreen(
-            onConfirm = { nickname ->
-                currentNickname = nickname
-                currentTopic = pendingTopic
-                currentQuizList = loadQuizFromAssets(context, pendingFileName)
-                currentScreen = "quiz"
-            },
-            onCancel = {
-                currentScreen = "home"
-            }
-        )
 
 
         "quiz" -> QuizScreen(
@@ -181,7 +167,7 @@ fun QuizApp(){
             }
         )
         "result" -> ResultScreen(
-            nickname = currentNickname,
+
             topic = currentTopic,
             totalQuestions = currentQuizList.size,
             wrongCount = currentQuizWrongList.size,
@@ -630,7 +616,7 @@ fun loadQuizFromAssets(context: Context, fileName: String): List<Quiz>{
 
 @Composable
 fun ResultScreen(
-    nickname: String,
+
     topic: String = "",
     totalQuestions: Int = 0,
     wrongCount: Int = 0,
@@ -648,7 +634,7 @@ fun ResultScreen(
     LaunchedEffect(topic, totalQuestions, wrongCount) {
         if (totalQuestions > 0) {
             val record = GameRecord(
-                nickname = nickname,
+
                 topic = topic,
                 score = score,
                 correctCount = correctCount,
@@ -1143,7 +1129,7 @@ fun RankingScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${index + 1}위 ${record.nickname}",
+                                    text = "${index + 1}위 ${record.topic}",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = mainTextColor,
@@ -1165,7 +1151,7 @@ fun RankingScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${record.topic} / $dateText",
+                                    text = dateText,
                                     fontSize = 14.sp,
                                     color = subTextColor,
                                     modifier = Modifier.weight(1f)
