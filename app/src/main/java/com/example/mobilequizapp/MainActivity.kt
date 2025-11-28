@@ -56,6 +56,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class MainActivity : ComponentActivity() {
@@ -79,7 +82,7 @@ fun HomeScreenPreview() {
 }
 //랭킹 위한 게임 기록
 data class GameRecord(
-    val nickname: String = "",
+
     val topic: String,           // 주제
     val score: Int,              // 점수 (0-100)
     val correctCount: Int,       // 정답 수
@@ -121,9 +124,7 @@ object GameRecordManager {
 fun QuizApp(){
 
     var currentScreen by remember { mutableStateOf("home") }
-    var currentNickname by remember { mutableStateOf("") }   // ⭐ 이번 게임 닉네임
-    var pendingTopic by remember { mutableStateOf("") }       // 선택한 주제명
-    var pendingFileName by remember { mutableStateOf("") }
+
 
     var currentTopic by remember {mutableStateOf("")}
     var currentQuizList by remember {mutableStateOf(listOf<Quiz>())}
@@ -140,9 +141,8 @@ fun QuizApp(){
             context = context,
             onTopicSelected = { topicName, fileName ->
                 currentQuizList = loadQuizFromAssets(context,fileName)
-                pendingTopic = topicName
-                pendingFileName = fileName
-                currentScreen = "name"
+                currentTopic = topicName
+                currentScreen = "quiz"
             },
             onWrongQuizClick = {
                 currentScreen = "wrong"
@@ -152,17 +152,6 @@ fun QuizApp(){
             }
         )
 
-        "name" -> NameScreen(
-            onConfirm = { nickname ->
-                currentNickname = nickname
-                currentTopic = pendingTopic
-                currentQuizList = loadQuizFromAssets(context, pendingFileName)
-                currentScreen = "quiz"
-            },
-            onCancel = {
-                currentScreen = "home"
-            }
-        )
 
 
         "quiz" -> QuizScreen(
@@ -178,7 +167,7 @@ fun QuizApp(){
             }
         )
         "result" -> ResultScreen(
-            nickname = currentNickname,
+
             topic = currentTopic,
             totalQuestions = currentQuizList.size,
             wrongCount = currentQuizWrongList.size,
@@ -241,7 +230,7 @@ fun HomeScreen(
 
                 ) {
                     HomeMenuCard(
-                        iconRes = R.drawable.general,    // 사자성어
+                        iconRes = R.drawable.idioms,    // 사자성어
                         title = "사자성어 퀴즈",
                         onClick = { onTopicSelected("사자성어", "idioms.json") }
                     )
@@ -286,6 +275,9 @@ fun HomeScreen(
                 text = "랭킹",
                 onClick = onRankingClick
             )
+
+
+
 
         }
     }
@@ -624,7 +616,7 @@ fun loadQuizFromAssets(context: Context, fileName: String): List<Quiz>{
 
 @Composable
 fun ResultScreen(
-    nickname: String,
+
     topic: String = "",
     totalQuestions: Int = 0,
     wrongCount: Int = 0,
@@ -642,7 +634,7 @@ fun ResultScreen(
     LaunchedEffect(topic, totalQuestions, wrongCount) {
         if (totalQuestions > 0) {
             val record = GameRecord(
-                nickname = nickname,
+
                 topic = topic,
                 score = score,
                 correctCount = correctCount,
@@ -1116,6 +1108,10 @@ fun RankingScreen(
                         2 -> Triple(Color(0xFF83B4F9), Color.Black, Color(0xFF222222)) // 3위
                         else -> Triple(Color.White, Color.Black, Color(0xFF555555))    // 나머지
                     }
+                    val dateText = remember(record.timestamp) {
+                        val formatter = SimpleDateFormat("MM.dd", Locale.getDefault())
+                        formatter.format(Date(record.timestamp))
+                    }
 
                     Box(
                         modifier = Modifier
@@ -1133,7 +1129,7 @@ fun RankingScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${index + 1}위 ${record.nickname}",
+                                    text = "${index + 1}위 ${record.topic}",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = mainTextColor,
@@ -1149,13 +1145,13 @@ fun RankingScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // 아랫줄: 주제 / 정답 수
+                            // 아랫줄: 주제 , 날짜 / 정답 수
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = record.topic,
+                                    text = dateText,
                                     fontSize = 14.sp,
                                     color = subTextColor,
                                     modifier = Modifier.weight(1f)
